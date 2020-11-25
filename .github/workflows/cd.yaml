@@ -17,15 +17,18 @@ jobs:
          aws-region: ap-northeast-2
      - name: Run
        env:
-         SERVICE_NAME: 13-209-14-51 # 자신의 서비스 이름으로 변경합니다.
-         IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/lightsail-nginx:${{ github.sha }}
+         SERVICE_NAME: 13-209-14-51 # 사용중인 서비스명
+         # github.sha는 깃 커밋의 해시값을 의미한다. 
+         # 푸시할때마다 깃 커밋의 해시값을 태그로 사용함으로서 오류 발생시 추적 용이하도록 한다.
+         IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/lightsail-nginx:${{ github.sha }} 
+       # curl 이하 3줄: aws cli툴을 버전 2로 사용한다.
        run: |
          echo $IMAGE_NAME:$IMAGE_TAG
          docker build -t $IMAGE_NAME .
          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
          docker push $IMAGE_NAME
-         envsubst < deployment.yaml.template > deployment.yaml 
-         curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+         envsubst < deployment.yaml.template > deployment.yaml
+         curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" 
          unzip awscliv2.zip
          sudo ./aws/install
          aws lightsail create-container-service-deployment --service-name $SERVICE_NAME --cli-input-yaml file://deployment.yaml
